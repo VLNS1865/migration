@@ -144,7 +144,7 @@ applyLanguage(initialLanguage);
 languageSelect.addEventListener("change", e => applyLanguage(e.target.value));
 
 // Paste your deployed Google Apps Script Web App URL here (must end in /exec).
-const GOOGLE_SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrxolIJXqCrpo2O1-ImSXrp1mg4b8D86q5uSds61HEDL9AAaSlVRPMfIvaa7I5Mo2J/exec";
 
 const form = document.getElementById("application-form");
 const message = document.getElementById("form-message");
