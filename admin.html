@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Export | Server 1865</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-wrap{max-width:720px;margin:9vh auto;padding:0 22px}.admin-card{background:#171e26;border:1px solid #303a45;padding:34px}.admin-card h1{font:800 38px 'Barlow Condensed';margin:0 0 8px}.admin-card p{color:#9ba7b3;font-size:13px;line-height:1.7}.admin-card input{width:100%;padding:14px;background:#0e141a;border:1px solid #35414d;color:white;margin:14px 0 18px}.admin-card button{width:100%;padding:15px;border:0;background:#d5a84d;font:800 13px 'Barlow Condensed';letter-spacing:1px;cursor:pointer}.admin-msg{font-size:12px;margin-top:15px;color:#ffc0b8}.admin-msg.ok{color:#a8dfb3}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-mark">1865</span><span><strong>SERVER 1865</strong><small>ADMIN EXPORT</small></span></a></header>
+  <main class="admin-wrap"><section class="admin-card">
+<p class="eyebrow">ADMIN · SERVER 1865</p>
+<h1>إدارة طلبات الهجرة</h1>
+<p>تُحفظ طلبات اللاعبين في جدول Google Sheets الخاص بالأدمن. لا توجد لوحة تحكم منفصلة.</p>
+<ol><li>افتح جدول Google Sheets الذي أنشأته أثناء إعداد الربط.</li>
+<li>ستجد المتقدمين مرتبين حسب مجموع قوة الأبطال من الأعلى إلى الأقل.</li>
+<li>لتنزيل Excel اختر: ملف ← تنزيل ← Microsoft Excel (.xlsx).</li></ol>
+<p>احتفظ برابط الجدول خاصًا بالأدمن ولا تشاركه مع اللاعبين.</p>
+</section></main>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const form = document.getElementById('export-form');
+    const msg = document.getElementById('admin-message');
+    const btn = document.getElementById('download-btn');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault(); msg.className='admin-msg'; msg.textContent='';
+      btn.disabled=true; btn.textContent='PREPARING FILE...';
+      try {
+        const res = await fetch('export.php', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({password:document.getElementById('admin-password').value})
+        });
+        const result = await res.json();
+        if (!res.ok || !result.success) throw new Error(result.message || 'Export failed.');
+        const rows = result.applications.map((r, i) => ({
+          'Rank': i + 1,
+          'In-game Name': r.playerName || '',
+          'Current Server': r.currentServer || '',
+          'Total Heroes Power': Number(r.heroesPower || 0),
+          'HQ Level': Number(r.hqLevel || 0),
+          'Main Squad Power': Number(r.mainSquadPower || 0),
+          'Current Alliance': r.alliance || '',
+          'Additional Information': r.additionalInfo || '',
+          'Submitted At (UTC)': r.submittedAt || ''
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{'Message':'No applications received yet.'}]);
+        worksheet['!cols'] = [{wch:8},{wch:24},{wch:16},{wch:22},{wch:12},{wch:22},{wch:24},{wch:55},{wch:24}];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Applications');
+        XLSX.writeFile(workbook, 'Server_1865_Migration_Applications.xlsx');
+        msg.className='admin-msg ok'; msg.textContent=`Excel file generated. ${rows.length} application(s), sorted by Total Heroes Power.`;
+      } catch (err) {
+        msg.textContent=err.message || 'Could not download the file.';
+      } finally { btn.disabled=false; btn.textContent='DOWNLOAD EXCEL FILE ↗'; }
+    });
+  </script>
+</body>
+</html>
